@@ -6,12 +6,12 @@
     },
     "provider": {
       "stage": "production",
-      "region": "eu-west-1",
-      "variableSyntax": "\\${([ ~:a-zA-Z0-9._'\",\\-\\/\\(\\)]+?)}",
+      "variableSyntax": "\\${([ ~:a-zA-Z0-9._@'\",\\-\\/\\(\\)*?]+?)}",
       "name": "aws",
       "runtime": "nodejs10.x",
       "memorySize": 192,
       "timeout": 10,
+      "region": "eu-west-1",
       "versionFunctions": true,
       "remoteFunctionData": null,
       "compiledCloudFormationTemplate": {
@@ -19,7 +19,58 @@
         "Description": "The AWS CloudFormation template for this Serverless application",
         "Resources": {
           "ServerlessDeploymentBucket": {
-            "Type": "AWS::S3::Bucket"
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
           },
           "ApiLogGroup": {
             "Type": "AWS::Logs::LogGroup",
@@ -68,7 +119,7 @@
                         ],
                         "Resource": [
                           {
-                            "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/angularseo-production-api:*"
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/angularseo-production*:*"
                           }
                         ]
                       },
@@ -79,7 +130,7 @@
                         ],
                         "Resource": [
                           {
-                            "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/angularseo-production-api:*:*"
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/angularseo-production*:*:*"
                           }
                         ]
                       }
@@ -94,7 +145,9 @@
                   [
                     "angularseo",
                     "production",
-                    "eu-west-1",
+                    {
+                      "Ref": "AWS::Region"
+                    },
                     "lambdaRole"
                   ]
                 ]
@@ -108,7 +161,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/angularseo/production/1575637838696-2019-12-06T13:10:38.696Z/angularseo.zip"
+                "S3Key": "serverless/angularseo/production/1575890307474-2019-12-09T11:18:27.474Z/angularseo.zip"
               },
               "FunctionName": "angularseo-production-api",
               "Handler": "lambda.universal",
@@ -127,14 +180,14 @@
               "IamRoleLambdaExecution"
             ]
           },
-          "ApiLambdaVersionnpf6xY1pdn1HDdGZk01KPjYdBAzSHmVSASKY0zoZxg": {
+          "ApiLambdaVersionbKqrdv6RF7fFLuTzymbBOlf2MkBlW4yXF7tLSREak": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ApiLambdaFunction"
               },
-              "CodeSha256": "tUMuIj8ZU6rpxZpTfgr7+MFFHp2KOXFU1lMuavrZ4Ok="
+              "CodeSha256": "3tK+n3aZVdfSSVmgre7MX+IcButTvO+vNKU9C59p1Pk="
             }
           },
           "ApiGatewayRestApi": {
@@ -183,7 +236,11 @@
                   "Fn::Join": [
                     "",
                     [
-                      "arn:aws:apigateway:",
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
                       {
                         "Ref": "AWS::Region"
                       },
@@ -225,7 +282,11 @@
                   "Fn::Join": [
                     "",
                     [
-                      "arn:aws:apigateway:",
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
                       {
                         "Ref": "AWS::Region"
                       },
@@ -244,7 +305,7 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayDeployment1575637838718": {
+          "ApiGatewayDeployment1575890179503": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -272,7 +333,11 @@
                 "Fn::Join": [
                   "",
                   [
-                    "arn:aws:execute-api:",
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
                     {
                       "Ref": "AWS::Region"
                     },
@@ -300,7 +365,7 @@
           "ApiLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ApiLambdaVersionnpf6xY1pdn1HDdGZk01KPjYdBAzSHmVSASKY0zoZxg"
+              "Ref": "ApiLambdaVersionbKqrdv6RF7fFLuTzymbBOlf2MkBlW4yXF7tLSREak"
             }
           },
           "ServiceEndpoint": {
@@ -313,7 +378,15 @@
                   {
                     "Ref": "ApiGatewayRestApi"
                   },
-                  ".execute-api.eu-west-1.amazonaws.com/production"
+                  ".execute-api.",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix"
+                  },
+                  "/production"
                 ]
               ]
             }
@@ -325,7 +398,58 @@
         "Description": "The AWS CloudFormation template for this Serverless application",
         "Resources": {
           "ServerlessDeploymentBucket": {
-            "Type": "AWS::S3::Bucket"
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
           }
         },
         "Outputs": {
@@ -348,6 +472,7 @@
     "plugins": [
       "serverless-apigw-binary"
     ],
+    "pluginsData": {},
     "functions": {
       "api": {
         "handler": "lambda.universal",
@@ -361,13 +486,18 @@
         ],
         "name": "angularseo-production-api",
         "package": {},
+        "memory": 192,
+        "timeout": 10,
+        "runtime": "nodejs10.x",
         "vpc": {}
       }
     },
-    "artifact": "C:\\GIT\\angular-seo\\.serverless\\angularseo.zip"
+    "serviceFilename": "serverless.yml",
+    "layers": {},
+    "artifact": "C:\\git\\angular-seo\\.serverless\\angularseo.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/angularseo/production/1575637838696-2019-12-06T13:10:38.696Z",
+    "artifactDirectoryName": "serverless/angularseo/production/1575890307474-2019-12-09T11:18:27.474Z",
     "artifact": "angularseo.zip"
   }
 }
